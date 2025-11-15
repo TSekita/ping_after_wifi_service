@@ -1,0 +1,11 @@
+[Unit]
+Description=Ping target after Wi-Fi is connected
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ping_target.sh
+
+[Install]
+WantedBy=multi-user.target
