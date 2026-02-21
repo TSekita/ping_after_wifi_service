@@ -1,10 +1,11 @@
 [Unit]
 Description=Ping target after Wi-Fi is connected
-After=network-online.target
-Wants=network-online.target
+After=NetworkManager-wait-online.service
+Wants=NetworkManager-wait-online.service
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/default/ping-after-wifi
 ExecStart=/usr/local/bin/ping_target.sh
 
 [Install]
