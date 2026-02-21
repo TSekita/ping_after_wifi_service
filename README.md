@@ -8,9 +8,11 @@ Ubuntu Desktop / Raspberry Pi で「起動後に Wi-Fi 接続完了を待って�
   - Wi-Fi が有効化されるまで待機
   - 指定インターフェースが `connected` になるまで待機
   - タイムアウト付きで `ping` を実行
+- `ping-after-wifi.env`
+  - 監視インターフェースや ping 先 IP を定義する設定ファイル
 - `ping-after-wifi.service`
   - 起動時に上記スクリプトを `oneshot` 実行
-  - 環境変数でターゲットや待機時間を指定
+  - `/etc/default/ping-after-wifi` から環境変数を読み込み
 
 ## インストール手順
 
@@ -20,13 +22,19 @@ Ubuntu Desktop / Raspberry Pi で「起動後に Wi-Fi 接続完了を待って�
 sudo install -m 755 ping_target.sh /usr/local/bin/ping_target.sh
 ```
 
-2. サービス配置
+2. 設定ファイル配置 (ping 先 IP はここだけ編集)
+
+```bash
+sudo install -m 644 ping-after-wifi.env /etc/default/ping-after-wifi
+```
+
+3. サービス配置
 
 ```bash
 sudo install -m 644 ping-after-wifi.service /etc/systemd/system/ping-after-wifi.service
 ```
 
-3. systemd へ反映・有効化
+4. systemd へ反映・有効化
 
 ```bash
 sudo systemctl daemon-reload
@@ -42,7 +50,7 @@ journalctl -u ping-after-wifi.service -f
 
 ## カスタマイズ
 
-`/etc/systemd/system/ping-after-wifi.service` の `Environment=` を変更します。
+`/etc/default/ping-after-wifi` の値を変更します（`PING_TARGET` の編集箇所はここだけです）。
 
 - `WIFI_INTERFACE` : 監視する NIC (例: `wlan0`)
 - `PING_TARGET` : ping 先 IP/ホスト

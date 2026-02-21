@@ -5,10 +5,7 @@ Wants=NetworkManager-wait-online.service
 
 [Service]
 Type=oneshot
-Environment=WIFI_INTERFACE=wlan0
-Environment=PING_TARGET=192.168.10.10
-Environment=PING_COUNT=4
-Environment=MAX_WAIT_SECONDS=120
+EnvironmentFile=-/etc/default/ping-after-wifi
 ExecStart=/usr/local/bin/ping_target.sh
 
 [Install]
