@@ -1,81 +1,57 @@
 # ping_after_wifi_service
 
-## 目的：
+Ubuntu Desktop / Raspberry Pi で「起動後に Wi-Fi 接続完了を待ってから ping を実行」するための `systemd` サービスです。
 
-「Ubuntu Desktopが起動→Wi-Fiが接続完了→pingを自動で打つ」これを達成する現実的な方法はsystemdサービスを作ること。
+## 構成
 
-## 方法：systemdのWi-Fi接続後フックでpingを自動実行する
+- `ping_target.sh`
+  - Wi-Fi が有効化されるまで待機
+  - 指定インターフェースが `connected` になるまで待機
+  - タイムアウト付きで `ping` を実行
+- `ping-after-wifi.service`
+  - 起動時に上記スクリプトを `oneshot` 実行
+  - 環境変数でターゲットや待機時間を指定
 
-systemdは「ネットワーク接続完了後にコマンド実行」が可能。以下の手順をRaspberry Pi側で行う。
+## インストール手順
 
-## 手順（確実に動く方法）
-
-１．pingスクリプトを作成
-
-例：/usr/local/bin/ping_target.sh
-
-```bash
-#!/bin/bash
-
-# Wi-Fi (wlan0) が有効になるまで待機
-while ! nmcli -t -f WIFI g | grep -q enabled; do
-    sleep 1
-done
-
-# 接続されるまで待機
-while ! nmcli -t -f DEVICE,STATE d | grep -q "wlan0:connected"; do
-    sleep 1
-done
-
-# ping 実行
-ping -c 4 192.168.xxx.xxx
-```
-
-### 保存したら実行権限：
+1. スクリプト配置
 
 ```bash
-sudo chmod +x /usr/local/bin/ping_target.sh
+sudo install -m 755 ping_target.sh /usr/local/bin/ping_target.sh
 ```
 
-２．systemdサービスファイルを作る
+2. サービス配置
 
-/etc/systemd/system/ping-after-wifi.service
-
-```ini
-[Unit]
-Description=Ping target after Wi-Fi is connected
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/ping_target.sh
-
-[Install]
-WantedBy=multi-user.target
+```bash
+sudo install -m 644 ping-after-wifi.service /etc/systemd/system/ping-after-wifi.service
 ```
 
-３．サービスを有効化
+3. systemd へ反映・有効化
 
-```pgsql
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable ping-after-wifi.service
 ```
 
-### テスト起動：
+## 動作確認
 
-```powershell
+```bash
 sudo systemctl start ping-after-wifi.service
-```
-
-### ログ確認：
-
-```powershell
 journalctl -u ping-after-wifi.service -f
 ```
 
-## これでできること
+## カスタマイズ
 
-・起動してWi-Fiが接続されると→自動で192.168.xxx.xxxにpingを送る
-・cloud-init不要
-・Ubuntu Desktopでも確実に動く
+`/etc/systemd/system/ping-after-wifi.service` の `Environment=` を変更します。
+
+- `WIFI_INTERFACE` : 監視する NIC (例: `wlan0`)
+- `PING_TARGET` : ping 先 IP/ホスト
+- `PING_COUNT` : ping 回数
+- `MAX_WAIT_SECONDS` : 接続待機タイムアウト秒数
+
+変更後は以下を実行:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ping-after-wifi.service
+```

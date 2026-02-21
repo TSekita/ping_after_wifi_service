@@ -1,10 +1,14 @@
 [Unit]
 Description=Ping target after Wi-Fi is connected
-After=network-online.target
-Wants=network-online.target
+After=NetworkManager-wait-online.service
+Wants=NetworkManager-wait-online.service
 
 [Service]
 Type=oneshot
+Environment=WIFI_INTERFACE=wlan0
+Environment=PING_TARGET=192.168.10.10
+Environment=PING_COUNT=4
+Environment=MAX_WAIT_SECONDS=120
 ExecStart=/usr/local/bin/ping_target.sh
 
 [Install]
