@@ -7,6 +7,7 @@ Ubuntu Desktop / Raspberry Pi で「起動後にネットワーク接続完了�
 - `ping_target.sh`
   - 指定インターフェースが `connected` になるまで待機
   - タイムアウト付きで `ping` を実行
+  - 起動時に依存コマンド (`nmcli`, `ping`) と監視インターフェースの存在を検証し、誤設定時は単発ログで終了
 - `ping-after-wifi.env`
   - 監視インターフェースや ping 先 IP を定義する設定ファイル
 - `ping-after-wifi.service`
