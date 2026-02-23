@@ -1,27 +1,44 @@
 #!/usr/bin/env bash
+set -u
 
-INTERFACE="wlan0"
-TARGET_IP="192.168.10.3"
-PING_COUNT=4
-SLEEP_SEC=2
+WIFI_INTERFACE="${WIFI_INTERFACE:-wlan0}"
+TARGET_IP="${TARGET_IP:-192.168.10.3}"
+PING_COUNT="${PING_COUNT:-4}"
+TIMEOUT_SEC="${TIMEOUT_SEC:-60}"
 
 log() {
-    echo "[`date '+%Y-%m-%d %H:%M:%S'`] $1"
+    echo "[ping-after-wifi] $*"
 }
 
-log "Waiting for $INTERFACE to obtain IP address..."
+log "Waiting up to ${TIMEOUT_SEC}s for ${WIFI_INTERFACE} connection..."
 
-until ip addr show "$INTERFACE" | grep -q "inet "; do
-    sleep "$SLEEP_SEC"
+elapsed=0
+
+while true; do
+    state=$(nmcli -t -f DEVICE,STATE device status \
+        | grep "^${WIFI_INTERFACE}:" \
+        | cut -d: -f2)
+
+    if [[ "$state" == "接続済み" || "$state" == "connected" ]]; then
+        log "${WIFI_INTERFACE} connected"
+        break
+    fi
+
+    if (( elapsed >= TIMEOUT_SEC )); then
+        log "Timeout waiting for ${WIFI_INTERFACE}"
+        exit 0
+    fi
+
+    sleep 1
+    ((elapsed++))
 done
 
-IP_ADDR=$(ip -4 addr show "$INTERFACE" | awk '/inet /{print $2}')
-log "$INTERFACE ready with IP $IP_ADDR"
+log "Pinging ${TARGET_IP} (${PING_COUNT} times)"
 
-log "Running ping to $TARGET_IP"
+if ping -c "${PING_COUNT}" "${TARGET_IP}"; then
+    log "Ping success"
+else
+    log "Ping failed (ignored)"
+fi
 
-# ★重要：失敗してもservice成功にする
-ping -c "$PING_COUNT" "$TARGET_IP" || log "Ping failed (ignored)"
-
-log "Service finished"
 exit 0
