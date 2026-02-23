@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly WIFI_INTERFACE="${WIFI_INTERFACE:-wlan0}"
+readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-${WIFI_INTERFACE:-wlan0}}"
 readonly PING_TARGET="${PING_TARGET:-192.168.10.10}"
 readonly PING_COUNT="${PING_COUNT:-4}"
 readonly CHECK_INTERVAL_SECONDS="${CHECK_INTERVAL_SECONDS:-1}"
@@ -30,15 +30,10 @@ wait_for_condition() {
 }
 
 main() {
-  log "Waiting for Wi-Fi to be enabled"
+  log "Waiting for ${NETWORK_INTERFACE} to connect"
   wait_for_condition \
-    "Wi-Fi radio enabled" \
-    "nmcli -t -f WIFI g | grep -qx 'enabled'"
-
-  log "Waiting for ${WIFI_INTERFACE} to connect"
-  wait_for_condition \
-    "${WIFI_INTERFACE} connected" \
-    "nmcli -t -f DEVICE,STATE d | grep -qx '${WIFI_INTERFACE}:connected'"
+    "${NETWORK_INTERFACE} connected" \
+    "nmcli -t -f DEVICE,STATE d | grep -qx '${NETWORK_INTERFACE}:connected'"
 
   log "Running ping: target=${PING_TARGET}, count=${PING_COUNT}"
   ping -c "$PING_COUNT" "$PING_TARGET"
