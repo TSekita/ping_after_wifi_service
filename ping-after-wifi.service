@@ -1,12 +1,15 @@
 [Unit]
-Description=Ping target after Wifi is connected
+Description=Ping target after network is connected
 After=NetworkManager.service
 Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
-Environment=INTERFACE=wlan0
+EnvironmentFile=-/etc/default/ping-after-wifi
+Environment=NETWORK_INTERFACE=wlan0
+Environment=PING_TARGET=192.168.10.3
 Environment=PING_COUNT=4
+Environment=MAX_WAIT_SECONDS=60
 ExecStart=/usr/local/bin/ping_target.sh
 
 [Install]
