@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly WIFI_INTERFACE="${WIFI_INTERFACE:-wlan0}"
-readonly PING_TARGET="${PING_TARGET:-192.168.10.10}"
+readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-${WIFI_INTERFACE:-wlan0}}"
+readonly PING_TARGET="${PING_TARGET:?PING_TARGET must be set}"
 readonly PING_COUNT="${PING_COUNT:-4}"
 readonly CHECK_INTERVAL_SECONDS="${CHECK_INTERVAL_SECONDS:-1}"
 readonly MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-120}"
@@ -21,7 +21,6 @@ wait_for_condition() {
       log "Timeout while waiting for: ${description}"
       return 1
     fi
-
     sleep "$CHECK_INTERVAL_SECONDS"
     elapsed=$((elapsed + CHECK_INTERVAL_SECONDS))
   done
@@ -30,18 +29,16 @@ wait_for_condition() {
 }
 
 main() {
-  log "Waiting for Wi-Fi to be enabled"
-  wait_for_condition \
-    "Wi-Fi radio enabled" \
-    "nmcli -t -f WIFI g | grep -qx 'enabled'"
+  log "Waiting for ${NETWORK_INTERFACE} to connect"
 
-  log "Waiting for ${WIFI_INTERFACE} to connect"
   wait_for_condition \
-    "${WIFI_INTERFACE} connected" \
-    "nmcli -t -f DEVICE,STATE d | grep -qx '${WIFI_INTERFACE}:connected'"
+    "${NETWORK_INTERFACE} connected" \
+    "nmcli -t -f DEVICE,STATE d | awk -F: -v iface='${NETWORK_INTERFACE}' '\$1 == iface && \$2 ~ /^connected/ { found=1 } END { exit found ? 0 : 1 }'"
 
   log "Running ping: target=${PING_TARGET}, count=${PING_COUNT}"
-  ping -c "$PING_COUNT" "$PING_TARGET"
+
+  ping -c "$PING_COUNT" "$PING_TARGET" || \
+    log "Ping failed but service continues"
 }
 
-main "$@"
+main
