@@ -33,7 +33,7 @@ main() {
   log "Waiting for ${NETWORK_INTERFACE} to connect"
   wait_for_condition \
     "${NETWORK_INTERFACE} connected" \
-    "nmcli -t -f DEVICE,STATE d | grep -qx '${NETWORK_INTERFACE}:connected'"
+    "nmcli -t -f DEVICE,STATE d | awk -F: -v iface='${NETWORK_INTERFACE}' '$1 == iface && $2 ~ /^connected(\\s|$)/ { found=1 } END { exit found ? 0 : 1 }'"
 
   log "Running ping: target=${PING_TARGET}, count=${PING_COUNT}"
   ping -c "$PING_COUNT" "$PING_TARGET"
