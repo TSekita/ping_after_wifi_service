@@ -2,7 +2,7 @@
 set -euo pipefail
 
 readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-${WIFI_INTERFACE:-wlan0}}"
-readonly PING_TARGET="${PING_TARGET:?PING_TARGET must be set (for example in /etc/default/ping-after-wifi)}"
+readonly PING_TARGET="${PING_TARGET:?PING_TARGET must be set}"
 readonly PING_COUNT="${PING_COUNT:-4}"
 readonly CHECK_INTERVAL_SECONDS="${CHECK_INTERVAL_SECONDS:-1}"
 readonly MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-120}"
@@ -21,7 +21,6 @@ wait_for_condition() {
       log "Timeout while waiting for: ${description}"
       return 1
     fi
-
     sleep "$CHECK_INTERVAL_SECONDS"
     elapsed=$((elapsed + CHECK_INTERVAL_SECONDS))
   done
@@ -31,12 +30,15 @@ wait_for_condition() {
 
 main() {
   log "Waiting for ${NETWORK_INTERFACE} to connect"
+
   wait_for_condition \
     "${NETWORK_INTERFACE} connected" \
-    "nmcli -t -f DEVICE,STATE d | awk -F: -v iface='${NETWORK_INTERFACE}' '$1 == iface && $2 ~ /^connected(\\s|$)/ { found=1 } END { exit found ? 0 : 1 }'"
+    "nmcli -t -f DEVICE,STATE d | awk -F: -v iface='${NETWORK_INTERFACE}' '\$1 == iface && \$2 ~ /^connected/ { found=1 } END { exit found ? 0 : 1 }'"
 
   log "Running ping: target=${PING_TARGET}, count=${PING_COUNT}"
-  ping -c "$PING_COUNT" "$PING_TARGET"
+
+  ping -c "$PING_COUNT" "$PING_TARGET" || \
+    log "Ping failed but service continues"
 }
 
-main "$@"
+main
