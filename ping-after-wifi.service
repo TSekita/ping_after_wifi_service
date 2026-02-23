@@ -1,16 +1,15 @@
 [Unit]
-Description=Ping target after network is connected
-After=NetworkManager.service
-Wants=NetworkManager.service
+Description=Ping target after WiFi is connected
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
-EnvironmentFile=-/etc/default/ping-after-wifi
-Environment=NETWORK_INTERFACE=wlan0
-Environment=PING_TARGET=192.168.10.3
-Environment=PING_COUNT=4
-Environment=MAX_WAIT_SECONDS=60
 ExecStart=/usr/local/bin/ping_target.sh
+RemainAfterExit=yes
+Restart=no
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
