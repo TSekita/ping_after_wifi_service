@@ -1,44 +1,17 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
-readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-${WIFI_INTERFACE:-wlan0}}"
-readonly PING_TARGET="${PING_TARGET:?PING_TARGET must be set}"
-readonly PING_COUNT="${PING_COUNT:-4}"
-readonly CHECK_INTERVAL_SECONDS="${CHECK_INTERVAL_SECONDS:-1}"
-readonly MAX_WAIT_SECONDS="${MAX_WAIT_SECONDS:-120}"
+INTERFACE="wlan0"
+TARGET="192.168.10.3"
 
-log() {
-  printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
-}
+echo "Waiting for $INTERFACE IP..."
 
-wait_for_condition() {
-  local description="$1"
-  local condition_command="$2"
-  local elapsed=0
+until ip addr show "$INTERFACE" | grep -q "inet "; do
+    sleep 2
+done
 
-  while ! eval "$condition_command"; do
-    if (( elapsed >= MAX_WAIT_SECONDS )); then
-      log "Timeout while waiting for: ${description}"
-      return 1
-    fi
-    sleep "$CHECK_INTERVAL_SECONDS"
-    elapsed=$((elapsed + CHECK_INTERVAL_SECONDS))
-  done
+echo "$INTERFACE ready"
 
-  log "Detected: ${description}"
-}
+ping -c 4 "$TARGET"
 
-main() {
-  log "Waiting for ${NETWORK_INTERFACE} to connect"
-
-  wait_for_condition \
-    "${NETWORK_INTERFACE} connected" \
-    "nmcli -t -f DEVICE,STATE d | awk -F: -v iface='${NETWORK_INTERFACE}' '\$1 == iface && \$2 ~ /^connected/ { found=1 } END { exit found ? 0 : 1 }'"
-
-  log "Running ping: target=${PING_TARGET}, count=${PING_COUNT}"
-
-  ping -c "$PING_COUNT" "$PING_TARGET" || \
-    log "Ping failed but service continues"
-}
-
-main
+echo "Done"
+exit 0
