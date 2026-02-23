@@ -52,12 +52,10 @@ journalctl -u ping-after-wifi.service -f
 
 `/etc/default/ping-after-wifi` の値を変更します（`PING_TARGET` の編集箇所はここだけです）。
 
-- `NETWORK_INTERFACE` : 監視する NIC (例: `wlan0`, `eth0`)
+- `NETWORK_INTERFACE` : 監視する NIC (例: `wlan0`)
 - `PING_TARGET` : ping 先 IP/ホスト
 - `PING_COUNT` : ping 回数
 - `MAX_WAIT_SECONDS` : 接続待機タイムアウト秒数
-
-> 互換性のため `WIFI_INTERFACE` も引き続き利用できますが、新規設定では `NETWORK_INTERFACE` を推奨します。
 
 変更後は以下を実行:
 

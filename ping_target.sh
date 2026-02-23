@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-${WIFI_INTERFACE:-wlan0}}"
+readonly NETWORK_INTERFACE="${NETWORK_INTERFACE:-wlan0}"
 readonly PING_TARGET="${PING_TARGET:?PING_TARGET must be set}"
 readonly PING_COUNT="${PING_COUNT:-4}"
 readonly CHECK_INTERVAL_SECONDS="${CHECK_INTERVAL_SECONDS:-1}"
